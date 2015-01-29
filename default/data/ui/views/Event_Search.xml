@@ -1,0 +1,235 @@
+<view autoCancelInterval="90" isVisible="False" onunloadCancelJobs="True" template="dashboard.html" stylesheet="dashboard_customsize.css" isSticky="False">
+  
+  <!-- Version = 2.04 / Last update = June 14, 2013 / Author = Guilhem Marchand / guilhem.marchand@gmail.com -->
+  
+  <label>Fail2ban Event Search Interface</label>
+  
+  <!-- standard splunk chrome at the top -->
+  <module name="AccountBar" layoutPanel="appHeader"/>
+  <module name="AppBar" layoutPanel="navigationHeader"/>
+  <module name="SideviewUtils" layoutPanel="appHeader" />
+  
+  <module name="Message" layoutPanel="messaging">
+    <param name="filter">*</param>
+    <param name="clearOnJobDispatch">False</param>
+    <param name="maxSize">1</param>
+  </module>
+  
+  <module name="URLLoader" layoutPanel="panel_row1_col1_grp1" autoRun="True">
+    
+    <module name="HTML" layoutPanel="panel_row1_col1_grp1">
+      <param name="html"><![CDATA[
+    
+      <p></p>
+      <h1>Fail2ban Event Search interface:</h1>
+      <p></p>
+    
+      ]]></param>
+    </module>
+    
+    <!-- Print Icon -->    
+    <module name="SearchControls" layoutPanel="panel_row1_col1_grp2">
+      <param name="sections">print</param>
+    </module>  
+    
+    <!-- Logo with a small graph screenshot -->
+    <module name="ServerSideInclude" layoutPanel="panel_row1_col1_grp2">
+      <param name="src">chartlogo.html</param>
+    </module>    
+    
+    <!-- Global TimeRangePicker -->  
+    <module name="TimeRangePicker" layoutPanel="splSearchControls-inline">
+      <param name="searchWhenChanged">True</param>
+      
+      <!-- Calling macro "define_span" to define Span and Showspan value dynamicaly depending on selected TimeRange (see macro.conf) -->
+      <module name="Search">
+        <param name="search">`define_span`</param>  
+        
+        <!-- Downstream values of Span and Showspan to all modules -->
+        <module name="ResultsValueSetter">
+          <param name="fields">Span,Showspan</param>
+          
+          
+          <!-- ########################################    BEGIN OF SECTIONS      ######################################## -->
+          
+          <module name="Search" layoutPanel="panel_row1_col1_grp1" autoRun="True">
+            <param name="search">`fail2ban_index` `fail2ban_src` | lookup geoip clientip as clientip | fillnull value=Unknown | stats count by id, clientip, fail2ban_host, jailname, client_country, client_city</param>
+            
+            <module name="TextField" layoutPanel="panel_row1_col1_grp1">
+              <param name="name">clientip</param>
+              <param name="default">*</param>
+              <param name="label">IP address:</param>
+              <param name="width">100px</param>
+              
+              <module name="TextField" layoutPanel="panel_row1_col1_grp1">
+                <param name="name">id</param>
+                <param name="default">*</param>
+                <param name="label">Uniq Event id:</param>
+                <param name="width">70px</param>
+                
+                <module name="Pulldown">
+                  <param name="name">fail2ban_host</param>
+                  <param name="label">Reporting Host:</param>
+                  <param name="template">fail2ban_host="$value$"</param>
+                  <param name="float">left</param>
+                  <param name="postProcess">dedup $name$ |sort $name$</param>
+                  <param name="searchFieldsToDisplay">
+                    <list>
+                      <param name="label">Reporting Host:</param>
+                      <param name="value">fail2ban_host</param>
+                    </list>
+                  </param>
+                  
+                  <module name="Pulldown">
+                    <param name="name">client_country</param>
+                    <param name="label">Country Origin:</param>
+                    <param name="template">client_country="$value$"</param>
+                    <param name="float">left</param>
+                    <param name="postProcess">dedup $name$ |sort $name$</param>
+                    <param name="searchFieldsToDisplay">
+                      <list>
+                        <param name="label">Country Origin:</param>
+                        <param name="value">client_country</param>
+                      </list>
+                    </param>
+                    
+                  <module name="Pulldown">
+                    <param name="name">client_city</param>
+                    <param name="label">City Origin:</param>
+                    <param name="template">client_city="$value$"</param>
+                    <param name="float">left</param>
+                    <param name="postProcess">dedup $name$ |sort $name$</param>
+                    <param name="searchFieldsToDisplay">
+                      <list>
+                        <param name="label">City Origin:</param>
+                        <param name="value">client_city</param>
+                      </list>
+                    </param>                    
+                    
+                    <module name="Pulldown">
+                      <param name="name">jailname</param>
+                      <param name="label">Jail Name:</param>
+                      <param name="template">jailname="$value$"</param>
+                      <param name="float">left</param>
+                      <param name="postProcess">dedup $name$ |sort $name$</param>
+                      <param name="searchFieldsToDisplay">
+                        <list>
+                          <param name="label">Jail Name:</param>
+                          <param name="value">jailname</param>
+                        </list>
+                      </param>           
+                      
+                      <module name="SubmitButton" layoutPanel="panel_row1_col1_grp1">
+                        <param name="allowSoftSubmit">True</param>
+                        <param name="label">Search</param>
+                        
+                        <module name="Search">
+                          <param name="search">
+                            `fail2ban_index` `fail2ban_src` | lookup geoip clientip as clientip | fillnull value=Unknown | search id="$id$" clientip="$clientip$" $jailname$ $fail2ban_host$ $client_country$ $client_city$ | table *
+                          </param>          
+                          
+                          <module name="PostProcess" layoutPanel="panel_row2_col1">
+                            <param name="search">
+                              | fields _time,clientip,client_country,client_city,id,jailname,number_of_failures,ssh_invaliduser,ssh_passwdfailure | fields - _raw | sort - _time
+                            </param>          
+                            
+                            <module name="HTML" layoutPanel="panel_row2_col1">
+                              <param name="html"><![CDATA[
+    
+         <p></p>
+         <h1>Stats table results:</h1>
+     
+         ]]></param>
+                            </module>
+                            
+                            <module name="ViewstateAdapter">
+                              <param name="suppressionList"/>
+                              <module name="HiddenFieldPicker">
+                                <param name="strictMode">True</param>
+                                <module name="JobProgressIndicator"/>
+                                <module name="Paginator">
+                                  <param name="count">10</param>
+                                  <param name="entityName">results</param>
+                                  <module name="EnablePreview">
+                                    <param name="display">False</param>
+                                    <param name="enable">True</param>
+                                    <module name="SimpleResultsTable">
+                                      <param name="allowTransformedFieldSelect">True</param>
+                                      <param name="entityName">results</param>
+                                      <param name="drilldown">row</param>
+                                      <module name="ConvertToDrilldownSearch">
+                                        <module name="ViewRedirector">
+                                          <param name="viewTarget">flashtimeline</param>
+                                        </module>
+                                      </module>
+                                    </module>
+                                    <module name="ViewRedirectorLink">
+                                      <param name="viewTarget">flashtimeline</param>
+                                    </module>
+                                  </module>
+                                </module>
+                              </module>
+                            </module>          
+                            
+                          </module> <!-- PostProcess --> 
+                          
+                          
+                          <module name="PostProcess" layoutPanel="panel_row2_col1">
+                            <param name="search">
+                              | sort - _time
+                            </param>  
+                            
+                            <module name="HTML" layoutPanel="panel_row2_col1">
+                              <param name="html"><![CDATA[
+    
+         <p></p>
+         <h1>Raw Data results:</h1>
+     
+         ]]></param>
+                            </module>            
+                            
+                            <module name="ViewstateAdapter">
+                              <param name="suppressionList"/>
+                              <module name="HiddenFieldPicker">
+                                <param name="strictMode">True</param>
+                                <module name="JobProgressIndicator"/>
+                                <module name="Paginator">
+                                  <param name="count">10</param>
+                                  <param name="entityName">results</param>
+                                  <module name="EnablePreview">
+                                    <param name="display">False</param>
+                                    <param name="enable">True</param>
+                                    <module name="EventsViewer">
+                                      <module name="ConvertToDrilldownSearch">
+                                        <module name="ViewRedirector">
+                                          <param name="viewTarget">flashtimeline</param>
+                                        </module>
+                                      </module>
+                                    </module>
+                                    <module name="ViewRedirectorLink">
+                                      <param name="viewTarget">flashtimeline</param>
+                                    </module>
+                                  </module>
+                                </module>
+                              </module>
+                            </module>
+                            
+                          </module> <!-- PostProcess -->      
+                          
+                        </module> <!-- Search -->          
+                        
+                      </module> <!--SubmitButton -->
+                    </module> <!-- PullDown -->
+                  </module> <!-- PullDown -->
+                </module> <!-- PullDown -->
+                </module> <!-- PullDown -->
+              </module> <!-- TextField -->  
+            </module> <!-- TextField -->
+          </module> <!-- Search -->
+          
+        </module> <!-- ResultsValueSetter -->
+      </module> <!-- Search -->
+    </module> <!-- TimeRangePicker -->
+  </module> <!-- URLLoader -->
+  
+</view>

@@ -1,0 +1,54 @@
+<view autoCancelInterval="90" isVisible="False" onunloadCancelJobs="True" template="dashboard.html" stylesheet="dashboard2.css" isSticky="False">
+  
+  <!-- Version = 2.03 / Last update = June 13, 2013 / Author = Guilhem Marchand / guilhem.marchand@gmail.com -->
+  
+  <label>Google Map</label>
+  
+  <!-- standard splunk chrome at the top -->
+  <module name="AccountBar" layoutPanel="appHeader"/>
+  <module name="AppBar" layoutPanel="navigationHeader"/>
+  <module name="SideviewUtils" layoutPanel="appHeader" />
+  
+  <module name="Message" layoutPanel="messaging">
+    <param name="filter">*</param>
+    <param name="clearOnJobDispatch">False</param>
+    <param name="maxSize">1</param>
+  </module>
+  
+  <module name="URLLoader" layoutPanel="panel_row1_col1" autoRun="True">  
+    
+    <!-- Global TimeRangePicker -->  
+    <module name="TimeRangePicker" layoutPanel="splSearchControls-inline">
+      <param name="searchWhenChanged">True</param>
+      
+      <module name="Search" layoutPanel="panel_row1_col1">
+        <param name="search">`fail2ban_index` `fail2ban_src` |localop |geoip clientip</param>
+        
+        <module name="GoogleMaps">
+          <param name="height">500px</param>
+          <param name="mapType">satellite</param>
+          
+          <module name="Search">
+            <param name="search">`fail2ban_index` `fail2ban_src` $clientips$ |geoip clientip</param>
+            <module name="ConvertToIntention">
+              <param name="settingToConvert">maps.drilldown</param>
+              <param name="intention">
+                <param name="name">stringreplace</param>
+                <param name="arg">
+                  <param name="clientips">
+                    <param name="value">$target$</param>
+                  </param>
+                </param>
+              </param>
+              <module name="ViewRedirector">
+                <param name="viewTarget">flashtimeline</param>
+              </module>
+              
+            </module>
+          </module>
+        </module>
+        
+      </module>
+    </module>
+  </module>
+</view>

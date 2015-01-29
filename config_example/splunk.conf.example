@@ -1,0 +1,7 @@
+[Definition]
+
+actionban = logger -i "[fail2ban.banevent]: fail2ban_host: [`hostname`] \
+	    Banhost: [<ip>] jailname: [<name>] numberoffailures: [<failures>] \
+	    logmessage: [ `grep '\<<ip>\>' <logpath> | tail -1` ] "	
+
+[Init]

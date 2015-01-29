@@ -1,0 +1,336 @@
+<view autoCancelInterval="90" isVisible="true" onunloadCancelJobs="true" stylesheet="dashboard2.css" template="dashboard.html" isSticky="False">
+  
+  <!-- Version = 2.02 / Last update = June 10, 2013 / Author = Guilhem Marchand / guilhem.marchand@gmail.com -->
+  
+  <label>Installation / Use Guide - Splunk for Fail2ban</label>
+  <module name="AccountBar" layoutPanel="appHeader" />
+  <module name="AppBar" layoutPanel="appHeader" />
+  <module name="SideviewUtils" layoutPanel="appHeader" />
+  
+  <module name="Message" layoutPanel="messaging">
+    <param name="filter">*</param>
+    <param name="maxSize">2</param>
+    <param name="clearOnJobDispatch">False</param>
+  </module>
+  
+  
+  <module name="HTML" layoutPanel="viewHeader">
+    <param name="html"><![CDATA[
+  <p></p>
+    <h1>Installation and use Guide for the Fail2ban application for Splunk</h1>
+  <p></p>
+    ]]></param>
+  </module>
+  
+  <!-- space to center the main logo -->
+  <module name="HTML" layoutPanel="panel_row1_col1_grp2">
+    <param name="html"><![CDATA[
+      <p></p>
+        ]]>
+    </param>
+  </module>
+  
+  <!-- Logo with a small graph screenshot -->
+  <module name="ServerSideInclude" layoutPanel="panel_row1_col1_grp2">
+    <param name="src">chartlogo.html</param>
+  </module>
+  
+  <module name="HTML" layoutPanel="panel_row1_col1_grp1">
+    <param name="html"><![CDATA[
+      
+    <p></p>
+      <h1>Information and disclaimer</h1>
+    <p></p>
+    <b>Welcome in the Installation guide, i hope you will find this Splunk application useful, do not hesitate to send me your feedback: <a href="mailto=guilhem.marchand@gmail.com">guilhem.marchand@gmail.com</a></b>
+      </br>
+    </br>
+      <b>CAUTION - This is application comes as it is, with no warranty!</b>
+      </br>
+    </p>
+    <h2>
+        You first need to ensure you installed required Splunk addon:
+    </h2>
+    <p></p>
+    - <a href="http://sideviewapps.com/apps/sideview-utils/download-full-version-internal-use">Sideview utils addon</a></br>    
+    - <a href="http://splunk-base.splunk.com/apps/22365/google-maps">Google Maps addon</a></br>
+    - <a href="http://splunk-base.splunk.com/apps/22282/geo-location-lookup-script-powered-by-maxmind">Maxmind geo location addon</a></br>
+    <p>
+    Do not hesitate to take a look at my blog installation and use guide : <a href="http://youresuchageek.blogspot.com/2013/01/splunkforfail2ban.html">http://youresuchageek.blogspot.com/2013/01/splunkforfail2ban.html</a>
+    </p>  
+    <p>  
+    This application can manage as many fail2ban servers as you need, it can be standalone installation or many hosts sending logs to a centralized syslog machine.
+    Using Syslog is required to catch usefull fields for Splunk!
+    </p>
+    <p>
+    Let's prepare your fail2ban installation and Splunk application, you need to tune some little things to be able to use this application, summary of steps:
+    </p>
+    <h2>
+      Fail2ban / Syslog Configurations steps:
+    </h2>
+    <p>
+    1. Set each fail2ban host to log events using SYSLOG
+      </p>
+      <p>    
+      2. Modify each faiL2ban host default action (eg. ban host action) to send log messages with required fields to SYSLOG
+      </p>
+      <p>    
+    3. Configure SYSLOG to trap these events and put them in a dedicated log file of your choice
+    </p>
+    <p>
+    4. Test your fail2ban / Syslog configuration to ensure events are being sucessfully trapped by your centralized Syslog
+    </p>
+      <p>
+    <p>
+    </p>
+    <h2>
+      Splunk configuration steps:
+    </h2>
+    <p>
+    5. Create a new dedicated index for Fail2ban called "index_fail2ban"
+    </p>
+    <p>
+    6. Add the Input source log file in Splunk corresponding to the log file where your Syslog is trapping events
+    </p>
+    <p>
+    7. Open Splunk for Failban and observe the magical power of Splunk ^^
+    </p>
+    
+    <p></p>
+    <p></p>
+    </br>
+    <h1>
+    Part 1 : Configuration of Fail2ban (to do on every Fail2ban host)
+    </h1>
+    </br>
+    <p></p>
+    <p></p>
+    
+    <h2>
+    1. Set each Fail2ban host to log events using SYSLOG
+    </h2>
+    <p>
+    <br><b>Edit the main fail2ban configuration file "/etc/fail2ban/fail2ban.conf" and set:</b></br>
+    </p>
+    <p>
+    <code>logtarget = SYSLOG</code>
+    </p>
+    
+    <h2>
+    2. Add a new action.d configuration file for events logging
+    </h2>
+    
+    <p>
+    <b>Note: See in config_example directory the file "splunk.conf.example"</b>
+    </p>
+    
+    <p>
+    <br><b>Create a new file: "/etc/fail2ban/actions.d/splunk.conf" with the following content:</b></br>
+    </p>
+    
+    <code>[Definition]</code></br>
+<code>actionban = logger -i "[fail2ban.banevent]: fail2ban_host: [`hostname`] \</code></br>
+<code>    Banhost: [<ip&gt;] jailname: [<name&gt;] numberoffailures: [<failures&gt;] \</code></br>
+<code>    logmessage: [ `grep '\<<ip&gt;\&gt;' <logpath&gt; | tail -1` ] "</code></br>  
+</br>
+<code>[Init]</code></br>
+</br>
+        
+    <h2>
+    3. Configure "/etc/fail2ban/jail.conf":
+    </h2>
+    
+    <p>
+    <b>Note: See in config_example directory the file "jail.conf.example"</b>
+    </p>
+    
+    <p>
+    <b>Depending of your wish, you can set Fail2ban to use 1 of these 3 actions: (by editing /etc/fail2ban/jail.conf)</b>
+    </p>
+    - action_ = Fail2ban will temporarely ban the IP source host</br>
+    - action_mw = Fail2ban will temporarely ban the IP host and send a warning mail including whois result request</br>
+    - action_mwl = Fail2ban will temporarely ban the IP host and send a warning mail including whois result request and log traces</br>
+    </p>
+    <p>
+    All you need is to modify jail.conf for all these action level to include our specific logging for Splunk.
+    </p>
+    <h3>
+    In jail.conf, add the following line just before the 3 action lines (action_, action_mw, action_mwl):
+    </h3>
+
+
+    <code># Name of Splunk config file</code></br>
+<code>splunkconf = splunk</code>
+    </br>
+    
+    <p>
+    <b>Then, add a new line related splunk underneath each action level, your configuration file will looks like:</b>
+    </p>
+    
+    <code>#</code></br>
+<code># Action shortcuts. To be used to define action parameter</code></br>
+</br>
+<code># The simplest action to take: ban only</code></br>
+<code>action_ = %(banaction)s[name=%(__name__)s, port="%(port)s", protocol="%(protocol)s", chain="%(chain)s"]</code></br>
+<code>      %(splunkconf)s[name=%(__name__)s, logpath=%(logpath)s]</code></br>
+</br>
+<code># ban & send an e-mail with whois report to the destemail.</code></br>
+<code>action_mw = %(banaction)s[name=%(__name__)s, port="%(port)s", protocol="%(protocol)s", chain="%(chain)s"]</code></br>
+<code>      %(mta)s-whois[name=%(__name__)s, dest="%(destemail)s", protocol="%(protocol)s", chain="%(chain)s"]</code></br>
+<code>      %(splunkconf)s[name=%(__name__)s, logpath=%(logpath)s]</code></br>
+</br>
+<code># ban & send an e-mail with whois report and relevant log lines</code></br>
+<code># to the destemail.</code></br>
+<code>action_mwl = %(banaction)s[name=%(__name__)s, port="%(port)s", protocol="%(protocol)s", chain="%(chain)s"]</code></br>
+<code>      %(mta)s-whois-lines[name=%(__name__)s, dest="%(destemail)s", logpath=%(logpath)s, chain="%(chain)s"]</code></br>
+<code>      %(splunkconf)s[name=%(__name__)s, logpath=%(logpath)s]</code></br>
+     
+     </br>
+     
+    
+     <h2>
+    3. Restart Fail2ban, check logging to Syslog:
+    </h2>
+    <p></p>
+    Now restart fail2ban server, generate a ban event (try to loggin with bad credentials to your host, or whatever you want) and check</br>
+    your Syslog file to find the generated event.</br>
+    
+    <h3>You should find a ban event like this:</h3>
+    <code>Jan 11 20:24:34 myhostname logger[30720]: [fail2ban.banevent]: fail2ban_host: [myfail2ban] Banhost: [xx.xx.xx.xx] jailname: [ssh] numberoffailures: [6] logmessage: [ Jan 11 20:24:32 myhostname sshd[30706]: Received disconnect from xx.xx.xx.xx: 11: Bye Bye [preauth] ]</code>
+    
+    <br></br>
+
+    </br>
+    </br>
+    <h1>
+    Part 2 : Configuration of Syslog
+    </h1>
+    </br>
+    </br>
+    <b>In 2 steps:</b>
+    </br>
+    </br>
+    - if you want to manage different Fail2ban servers from Splunk, then read the Multiple Fail2ban client configuration note</br>
+    - If you just one host to manage (Fail2ban and Splunk are installed in the same host), then just follow the common configuration section</br>
+    </br> 
+    </br>  
+    
+    <b>MULTIPLE FAIL2BAN CLIENT CONFIGURATION NOTE: Remote and centralized Syslog configuration:</b></br>
+    </br>
+    Configuring Syslog to send events from a Syslog host to a a remote Syslog server is out of the scope of this guide.</br>
+    Therefore, if you want to send fail2ban events of different hosts, you can choose between different solutions, as:</br>
+    </br>
+    - Sending events using Syslog to a remote centralized Syslog</br>
+    - Sending events from local log file using Splunk forwarder module</br>
+    - Others (homemade scripts...)</br>
+    </br>
+    I would recommend using "Rsyslog" (Enhanced Syslog version that comes with many modern Linux OS) to achieve this, which is in deed easy enough.</br>
+    </br>
+    Here is in 2 steps a quick syslog centralized configuration: (remember to restart rsyslog after each modification)</br> 
+    </br>
+    <b>1. In client rsyslog host, modify "/etc/rsyslog.conf" and add a section to send any events to your Syslog server: (adapt the example IP)</b>
+    </br>
+    </br>
+    <code>*.* @192.168.1.254:514</code>
+    </br>
+    <This will send any local Syslog event to a remote Syslog host using UDP with default Syslog port, ensure your firewall rules allow this local traffic.</br>
+    </br>
+    <b>2. In syslog server configuration, create a configuration file that will trapp any remote client Syslog events and put then into a dedicated per host log file:</b></br>
+    <b>Ensure your configuration name will be read after the fail2ban syslog config file you will create after. (see above)</b></br>
+    </br>
+    <b>Create "/etc/rsyslog.d/10-fail2ban.conf" with the following content: (Note: The fail2ban config we will create after will be called 08 to be read before this and intercept messages)</b>
+    </br>
+    </br>
+    <code>&#36;template PerHostLog,"/var/log/remote-hosts/%HOSTNAME%/%HOSTNAME%.log"</code></br>
+    <code>&#36;template RemoteHostFileFormat,"%TIMESTAMP% %HOSTNAME% %syslogfacility-text% %syslogtag%%msg:::sp-if-no-1st-sp%%msg:::space-cc,drop-last-lf%\n"
+</code></br>
+    <code>:inputname, isequal, "imudp" ?PerHostLog;RemoteHostFileFormat</code></br>
+    <code>& ~</code></br>
+    </br>
+    
+    <b>Finally, achieve the configuration above to be able to intercept remote Syslog client events containing the fail2ban event tag and put them in a dedicated log file for all hosts.</b>
+   
+    </br>
+    </br>   
+    <b>COMMON CONFIGURATION for Single and Multiple Fail2ban installations:</b>
+    
+    </br>
+    
+    <h2>
+    1. Set Syslog to trap ban events to a dedicated logfile
+    </h2>
+    
+    This configuration part will depend on your system and needs, i recommend the use of "rsyslog"</br>
+    </br>
+    The goal is to configure syslog to trap any event containing a key word "[fail2ban.banevent]" into a dedicated log file</br>
+    </br>
+    In Debian/Ubuntu systems for example, create an rsyslog configuration file, example:</br>
+    <b>Create "/etc/rsyslog.d/08-fail2ban.conf" with the following content:</b>
+    <br></br>
+    <code>:msg, contains, "[fail2ban.banevent]" /var/log/fail2ban_banevent.log</code></br>
+    <code>& ~</code></br>
+    </br>
+    Restart rsyslog to take effect:</br>
+    <code>sudo service rsyslog restart</code></br>
+    </br>
+    
+    <h2>
+    2. Generate a ban event and check your logfile
+    </h2>
+    
+    Generate a new ban event and check your log file, you should see a new ban event message! </br>
+    If you are ok with that, then you're done with system configuration ^^ </br>
+    
+    </br>
+    </br>
+    </br>
+    <h1>
+    Part 3 : Configuration of Splunk (the easy part!)
+    </h1>
+    
+    </br>
+    
+        
+    <h2>
+    1. Configure input file
+    </h2>
+    
+    Go to "manager", "Data Input", and configure <b>MANUALLY</b> a new input file pointing to your fail2ban log file.</br>
+    
+    </br>
+    <b>With settings by part configuration:</b></br>
+    
+    </br>
+    <b>Host:</b></br>
+    </br>
+    You can let the default settings, it does not mind as we don't use it to recognize the fail2ban reporting server.</br>
+    </br>
+    
+    <b>Source type:</b></br>
+    </br>
+    - Set the source Type: <b>Manual</b></br>
+    - Source type: <b>fail2ban_banevent</b></br>
+    </br>
+
+    <b>Index:</b></br>
+    </br>
+    - Set the destination Index: <b>fail2ban_index</b></br>
+    </br>
+    
+    Good news, you're done!!!</br>
+    Just wait a few minutes to let Splunk get the content of your fail2ban log file, then go to the splunk application</br>
+    </br>
+    <b>Splunk for Fail2ban</b>
+    </br>
+    </br>
+    
+    <p></p>
+        
+    
+    ]]></param>
+  </module>
+  
+  
+  
+  
+  
+</view>

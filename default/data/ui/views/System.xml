@@ -1,0 +1,306 @@
+<view autoCancelInterval="90" isVisible="True" onunloadCancelJobs="true" template="dashboard.html" isSticky="False" stylesheet="dashboard1.css">
+  <label>System</label>
+  
+  <!-- Version = 2.03 / Last update = June 13, 2013 / Author = Guilhem Marchand / guilhem.marchand@gmail.com -->
+  
+  <module name="AccountBar" layoutPanel="appHeader" />
+  <module name="AppBar" layoutPanel="appHeader" />
+  <module name="SideviewUtils" layoutPanel="appHeader" />
+  
+  <module name="Message" layoutPanel="messaging">
+    <param name="filter">*</param>
+    <param name="maxSize">2</param>
+    <param name="clearOnJobDispatch">False</param>
+  </module>
+  
+  <module name="URLLoader" layoutPanel="panel_row1_col1_grp1" autoRun="True">
+    
+    <module name="HTML" layoutPanel="panel_row1_col1_grp1">
+      <param name="html"><![CDATA[
+       
+       </p>
+       <h1>Splunk for Fail2ban: Index Activity Overview</h1>
+       
+
+      ]]></param>
+    </module>
+    
+    <!-- Logo with a small graph screenshot -->
+    <module name="ServerSideInclude" layoutPanel="panel_row1_col1_grp2">
+      <param name="src">chartlogo.html</param>
+    </module>    
+    
+    <!-- Global TimeRangePicker -->  
+    <module name="TimeRangePicker" layoutPanel="splSearchControls-inline">
+      <param name="searchWhenChanged">True</param>
+      <param name="selected">Today</param>
+      
+      <!-- Calling macro "define_span" to define Span and Showspan value dynamicaly depending on selected TimeRange (see macro.conf) -->
+      <module name="Search">
+        <param name="search">`define_span`</param>  
+        
+        <!-- Downstream values of Span and Showspan to all modules -->
+        <module name="ResultsValueSetter">
+          <param name="fields">Span,Showspan</param>
+          
+          <!-- Show Span value -->
+          
+          <module name="HTML" layoutPanel="panel_row1_col1_grp1">
+            <param name="html"><![CDATA[
+     
+     <h2>Using span value: $Showspan$</h2>
+     
+      ]]></param>
+          </module>     
+          
+          <!-- Show time range start and end -->
+          
+          <module name="SingleValue" layoutPanel="panel_row1_col1_grp1">
+            <param name="field">searchStartTIme</param>
+            <param name="format">string</param>
+            <param name="beforeLabel">Begin Analysis:</param>
+          </module>        
+          <module name="SingleValue" layoutPanel="panel_row1_col1_grp1">
+            <param name="field">searchEndTime</param>
+            <param name="format">string</param>
+            <param name="beforeLabel">End Analysis:</param>
+          </module>
+          
+          <!-- ########################################    BEGIN OF SECTIONS      ######################################## -->  
+          
+          <module name="HTML" layoutPanel="panel_row3_col1">
+            <param name="html"><![CDATA[
+    <h3>Iptables index stats:</h3>
+    ]]></param>
+          </module>
+          
+          <module name="Search" layoutPanel="panel_row3_col1">
+            
+            <param name="search">| metadata type=sourcetypes index="fail2ban_index" | stats min(firstTime) as min, max(lastTime) as max | eval min=strftime(min,"%c") | eval max=strftime(max,"%c")</param>          
+            
+            <module name="SingleValue" layoutPanel="panel_row3_col1_grp1">
+              <param name="field">min</param>
+              <param name="format">string</param>
+              <param name="beforeLabel">Earliest Event:</param>
+              <param name="linkSearch"> | metadata type=hosts index="fail2ban_index" | stats min(firstTime) as min | eval min=strftime(min,"%a %B %Y %H:%M")"</param>                                    
+            </module>
+            
+            <module name="SingleValue" layoutPanel="panel_row3_col1_grp1">
+              <param name="field">max</param>
+              <param name="format">string</param>
+              <param name="beforeLabel">Lastest Event:</param>
+              <param name="linkSearch"> | metadata type=hosts index="fail2ban_index" | stats max(lastTime) as max | eval max=strftime(max,"%a %B %Y %H:%M")"</param>                                    
+            </module>     
+            
+          </module> <!-- Search -->    
+          
+          <module name="Search" layoutPanel="panel_row3_col1" autoRun="True">
+            <param name="search"> | eventcount summarize=false report_size=true index="fail2ban_index" OR index="iptables_summary" | eval size_KB = round(size_bytes/1024,0) | fields index, size_KB, count</param>          
+            
+            <module name="PostProcess">
+              <param name="search">| where index="fail2ban_index"</param>  
+              <module name="SingleValue" layoutPanel="panel_row3_col1_grp2">
+                <param name="field">size_KB</param>
+                <param name="beforeLabel">Current Index Size (KB):</param>
+                <param name="classField">range</param>
+                <param name="format">number</param>
+                <param name="linkView">flashtimeline</param>
+                <param name="linkSearch"> | eventcount summarize=false report_size=true index="fail2ban_index" | eval size_KB = round(size_bytes/1024,2) | fields index, size_KB</param>
+              </module>
+              <module name="SingleValue" layoutPanel="panel_row3_col1_grp2">
+                <param name="field">count</param>
+                <param name="beforeLabel">Number of Events:</param>
+                <param name="format">number</param>
+                <param name="classField">range</param>
+                <param name="linkView">flashtimeline</param>
+                <param name="linkSearch"> | eventcount summarize=false report_size=true index="fail2ban_index" | fields index, count</param>
+              </module>
+              
+            </module> <!-- PostProcess -->   
+            
+          </module> <!-- Search -->    
+          
+          
+          <module name="Search" layoutPanel="panel_row3_col1_grp2">
+            <param name="search">index=_internal source=*metrics.log group=per_index_thruput series="fail2ban_index" | bucket _time span=1d | stats sum(kb) as KB by series, _time</param>          
+            
+            <module name="PostProcess">
+              <param name="search">| where series="fail2ban_index" | stats mean(KB) as Average by series | eval Average=round(Average,0)</param>  
+              <module name="SingleValue" layoutPanel="panel_row3_col1_grp2">
+                <param name="field">Average</param>
+                <param name="format">number</param>
+                <param name="beforeLabel">Average amount of data indexed per day: (KB)</param>
+                <param name="classField">range</param>
+                <param name="linkView">flashtimeline</param>
+                <param name="linkSearch">index=_internal source=*metrics.log group=per_index_thruput series="fail2ban_index" | eval KB = round(kb,0) | bucket _time span=1d | stats sum(KB) as KB by series, _time | stats mean(KB) as Average by series | eval Average=round(Average,0)</param>                        
+              </module>        
+            </module>    
+            <module name="PostProcess">
+              <param name="search">| where series="fail2ban_index" | stats max(KB) as Max by series | eval Max=round(Max,0)</param>  
+              <module name="SingleValue" layoutPanel="panel_row3_col1_grp2">
+                <param name="field">Max</param>
+                <param name="format">number</param>
+                <param name="beforeLabel">Max amount of data indexed per day: (KB)</param>
+                <param name="classField">range</param>
+                <param name="linkView">flashtimeline</param>
+                <param name="linkSearch">index=_internal source=*metrics.log group=per_index_thruput series="fail2ban_index" | eval KB = round(kb,0) | bucket _time span=1d | stats sum(KB) as KB by series, _time | stats max(KB) as Max by series | eval Max=round(Max,0)</param>                        
+              </module>        
+            </module>
+            <module name="PostProcess">
+              <param name="search">| where series="fail2ban_index" | stats sum(KB) as Total by series | eval Total=round(Total,0)</param>  
+              <module name="SingleValue" layoutPanel="panel_row3_col1_grp2">
+                <param name="field">Total</param>
+                <param name="format">number</param>
+                <param name="beforeLabel">Total amount of data indexed : (KB)</param>
+                <param name="classField">range</param>
+                <param name="linkView">flashtimeline</param>
+                <param name="linkSearch">index=_internal source=*metrics.log group=per_index_thruput series="fail2ban_index" | eval KB = round(kb,0) | bucket _time span=1d | stats sum(KB) as KB by series, _time | stats sum(KB) as Total by series | eval Total=round(Total,0)</param>                        
+              </module>
+            </module>     
+            
+          </module> <!-- Search -->
+          
+          
+          
+          <!-- Charts -->
+          
+          <module name="HTML" layoutPanel="panel_row4_col1">
+            <param name="html"><![CDATA[
+    <h3>Chart options:</h3>
+    ]]></param>
+          </module>  
+          
+          <module name="Pulldown" layoutPanel="panel_row4_col1_grp1">
+            <param name="name">index_tosearch</param>
+            <param name="label">Indexes to chart:</param>
+            <param name="staticOptions">
+              <list>
+                <param name="value">"fail2ban_index"</param>
+                <param name="label">Iptables Index (fail2ban_index)</param>
+              </list>
+              <list>
+                <param name="value">*</param>
+                <param name="label">All</param>
+              </list>
+            </param> 
+            
+            <module name="Pulldown" layoutPanel="panel_row4_col1_grp2">
+              <param name="name">charting.chart.nullValueMode</param>
+              <param name="label">Missing data threatment:</param>
+              <param name="staticOptions">
+                <list>
+                  <param name="value">connect</param>
+                  <param name="label">Connect (default)</param>
+                </list>
+                <list>
+                  <param name="value">gaps</param>
+                  <param name="label">Ignore (gaps)</param>
+                </list>
+                <list>
+                  <param name="value">zero</param>
+                  <param name="label">Threat as zero</param>
+                </list>
+              </param>    
+              
+              <module name="Pulldown" layoutPanel="panel_row4_col1_grp3">
+                <param name="name">charting.chart</param>
+                <param name="label">Chart type:</param>
+                <param name="clear">left</param>
+                <param name="staticOptions">
+                  <list>
+                    <param name="value">area</param>
+                    <param name="label">Area</param>
+                  </list>        
+                  <list>
+                    <param name="value">column</param>
+                    <param name="label">Column</param>
+                  </list>
+                  <list>
+                    <param name="value">line</param>
+                    <param name="label">Line</param>
+                  </list>
+                  <list>
+                    <param name="value">bar</param>
+                    <param name="label">Bar</param>
+                  </list>
+                  <list>
+                    <param name="value">scatter</param>
+                    <param name="label">Scatter</param>
+                  </list>
+                </param>    
+                
+                <module name="Pulldown" layoutPanel="panel_row4_col1_grp1">
+                  <param name="name">charting.chart.stackMode</param>
+                  <param name="label">Mode :</param>
+                  <param name="staticOptions">
+                    <list>
+                      <param name="value">default</param>
+                      <param name="label">Unstacked</param>
+                    </list>
+                    <list>
+                      <param name="value">stacked</param>
+                      <param name="label">Stacked</param>
+                    </list>
+                    <list>
+                      <param name="value">stacked100</param>
+                      <param name="label">100% Stacked</param>
+                    </list>
+                  </param>    
+                  
+                  
+                  <module name="HTML" layoutPanel="panel_row5_col1">
+                    <param name="html"><![CDATA[
+         <h3>Data Indexing Activity (in KiloBytes):</h3>
+         ]]></param>
+                  </module>      
+                  
+                  <module name="Search" autoRun="True" layoutPanel="panel_row5_col1">
+                    <param name="search">index=_internal source=*metrics.log group=per_index_thruput $index_tosearch$ | eval KB = round(kb,0) | timechart span=$Span$ sum(KB) by series | fillnull value=0</param>          
+                    <module name="HiddenFieldPicker">
+                      <param name="strictMode">True</param>
+                      <module name="JobProgressIndicator">
+                        <module name="EnablePreview">
+                          <param name="display">False</param>
+                          <param name="enable">True</param>
+                          <module name="HiddenChartFormatter">
+                            <param name="charting.legend.placement">bottom</param>
+                            <param name="charting.axisTitleX.text">Time</param>
+                            <param name="charting.axisTitleY.text">KB</param>
+                            <module name="JSChart">
+                              <param name="width">100%</param>
+                              <param name="height">300px</param>
+                              <module name="ConvertToDrilldownSearch">
+                                <module name="ViewRedirector">
+                                  <param name="viewTarget">flashtimeline</param>
+                                </module>
+                              </module>
+                            </module>
+                            <module name="ViewRedirectorLink">
+                              <param name="viewTarget">flashtimeline</param>
+                            </module>
+                          </module>
+                        </module>
+                      </module>
+                    </module>
+                  </module>
+                  
+                </module>  <!-- Pulldown -->
+              </module>  <!-- Pulldown -->    
+            </module>  <!-- Pulldown -->
+            
+          </module>  <!-- Pulldown -->    
+          
+          
+          
+          <!-- ########################################    END OF SECTIONS      ######################################## -->
+          
+        </module> <!-- TimeRangePicker -->
+        
+      </module> <!-- URLLoader -->
+      
+    </module> <!-- ResultsValueSetter -->
+    
+  </module> <!-- Search -->
+  
+  
+</view>

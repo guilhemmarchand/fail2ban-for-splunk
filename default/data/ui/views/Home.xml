@@ -1,0 +1,495 @@
+<view autoCancelInterval="90" isVisible="true" onunloadCancelJobs="true" stylesheet="dashboard2.css" template="dashboard.html" isSticky="False">
+  
+  <!-- Version = 3.0 / Last update = October 12, 2013 / Author = Guilhem Marchand / guilhem.marchand@gmail.com -->
+  
+  <label>Home</label>
+  <module name="AccountBar" layoutPanel="appHeader" />
+  <module name="AppBar" layoutPanel="appHeader" />
+  <module name="SideviewUtils" layoutPanel="appHeader" />
+  
+  <module name="Message" layoutPanel="messaging">
+    <param name="filter">*</param>
+    <param name="maxSize">2</param>
+    <param name="clearOnJobDispatch">False</param>
+  </module>
+  
+  <!-- Main Dashboard Title in Page Header -->
+  <module name="HTML" layoutPanel="viewHeader">
+    <param name="html"><![CDATA[
+  <p></p>
+    <h1>Fail2ban</h1>
+  <p></p>
+    ]]></param>
+  </module>
+  
+  <module name="HTML" layoutPanel="panel_row1_col1_grp1">
+    <param name="html"><![CDATA[
+      
+    <p></p>
+      <h1>Welcome in Fail2ban application</h1>
+    <p></p>
+
+    <p><b>Please choose your view and options:</b></p>
+
+    <p></p>
+    <b>- Fail2ban Overview:</b> Complete charts and statistics about Fail2ban activity</br>
+    <p></p>
+    <b>- Google Map Overview :</b> Google World Map Overview of origin connections</br>
+    <p></p>
+    <b>- Event Search :</b> Search Fail2ban events with various filter options</br>
+    <p></p>
+    
+    ]]></param>
+  </module>
+  
+  <!-- ######################################    Dashboards    ###################################### --> 
+  
+  <module name="HTML" layoutPanel="panel_row1_col1_grp1">
+    <param name="html"><![CDATA[
+    <h3>Realtime Activity Overview:</h3>
+    ]]></param>
+  </module>  
+  
+  <module name="Pulldown" layoutPanel="panel_row1_col1_grp1" autoRun="True">
+    <param name="name">time</param>
+    <param name="staticOptions"/>
+    <param name="label">RealTime Window:</param>
+    <param name="template">time="$value$"</param>
+    <param name="float">left</param>
+    <param name="staticOptions">
+      <list>
+        <param name="value">rt-24h</param>
+        <param name="label">24 Hours</param>
+      </list>
+      <list>
+        <param name="value">rt-12h</param>
+        <param name="label">12 Hours</param>
+      </list>
+      <list>
+        <param name="value">rt-4h</param>
+        <param name="label">4 Hours</param>
+      </list>            
+      <list>
+        <param name="value">rt-1h</param>
+        <param name="label">1 Hour</param>
+      </list>
+      <list>
+        <param name="value">rt-30m</param>
+        <param name="label">30 Minutes</param>
+      </list>
+    </param>     
+    
+    <module name="Pulldown">
+      <param name="name">interface</param>
+      <param name="staticOptions"/>
+      <param name="label">Interface:</param>
+      <param name="template">interface="$value$"</param>
+      <param name="float">left</param>
+      <param name="staticOptions">
+        <list>
+          <param name="value">Activity_Overview_Realtime</param>
+          <param name="label">Activity Overview</param>
+        </list>
+        <list>
+          <param name="value">Google_Map</param>
+          <param name="label">Google Map</param>
+        </list>    
+      </param>
+      
+      <module name="Button">
+        <param name="label">Valid Access</param>
+        <param name="allowSoftSubmit">False</param>
+        
+        <module name="Redirector">
+          <param name="url">$interface.rawValue$</param>
+          <param name="popup">true</param>
+          <param name="arg.title">$interface.rawValue$</param>
+          <param name="arg.earliest">$time.rawValue$</param>
+          <param name="arg.latest">rt</param>
+        </module>
+      </module>
+      
+    </module>
+  </module>        
+  
+  <module name="HTML" layoutPanel="panel_row1_col1_grp1">
+    <param name="html"><![CDATA[
+    <h3>Timerange Activity Overview:</h3>
+    ]]></param>
+  </module>
+  
+  <module name="TimeRangePicker" layoutPanel="panel_row1_col1_grp1" autoRun="True">
+    <param name="selected">Last 24 hours</param>
+    
+    <module name="Search" autoRun="True">
+      <param name="search">| inputlookup Zones_Dashboards | fields type,dashboard</param>
+      
+      <module name="Pulldown">
+        <param name="name">type</param>
+        <param name="staticOptions"/>
+        <param name="label">Interface:</param>
+        <param name="template">type="$value$"</param>
+        <param name="float">left</param>
+        <param name="staticOptions">
+          <list>
+            <param name="value">Activity_Overview</param>
+            <param name="label">Activity_Overview</param>
+          </list>
+          <list>
+            <param name="value">Google_Map</param>
+            <param name="label">Google_Map</param>
+          </list>      
+          <list>
+            <param name="value">Event_Search</param>
+            <param name="label">Event_Search</param>
+          </list>      
+        </param>
+        
+        <module name="Button">
+          <param name="label">Valid Access</param>
+          <param name="allowSoftSubmit">False</param>
+          
+          <module name="Redirector">
+            <param name="url">$type.rawValue$</param>
+            <param name="popup">true</param>
+            <param name="arg.title">$type.rawValue$</param>
+            <param name="arg.earliest">$search.timeRange.earliest$</param>
+            <param name="arg.latest">$search.timeRange.latest$</param>
+          </module>
+        </module>
+      </module>
+    </module>
+  </module>
+  
+  <!-- space to center the main logo -->
+  <module name="HTML" layoutPanel="panel_row1_col1_grp2">
+    <param name="html"><![CDATA[
+      <p></p>
+        ]]>
+    </param>
+  </module>
+  
+  <!-- Logo with a small graph screenshot -->
+  <module name="ServerSideInclude" layoutPanel="panel_row1_col1_grp2">
+    <param name="src">chartlogo.html</param>
+  </module>
+  
+  <!-- ######################################    Dashboards    ###################################### --> 
+  
+  <!-- ######################################    Quick Overview    ###################################### --> 
+  
+  <!-- Quick Fail2ban Activity Overview (Realtime over last 24 hours)-->
+  
+  <module name="Search" layoutPanel="panel_row2_col1" autoRun="True">
+    <param name="earliest">rt-24h</param>
+    <param name="latest">rt</param>
+    <param name="search">`fail2ban_index` `fail2ban_src` |stats c(id) as count</param>
+    
+    <module name="EnablePreview">
+      <param name="enable">True</param>
+      <param name="display">False</param>
+      
+      <module name="HTML">
+        <param name="html"><![CDATA[
+
+      <p></p>
+      <h1>Quick Activity Overview (Realtime within last 24 hours)</h1>
+      <p></p>
+
+          <div class="valueDisplay">
+            <div class="inner"><b> Number of Hosts denied within Last 24 hours: $results[0].count$  </b></div>
+          </div>
+          <br clear="all">
+        ]]>
+        </param>
+      </module>
+      
+    </module>
+    
+  </module>  <!-- Search -->
+  
+  <!-- Fail2ban_Events -->
+  
+  <module name="Search" layoutPanel="panel_row2_col1" autoRun="True">
+    <param name="search">| metadata type=hosts index="fail2ban_index" | stats max(lastTime) as max | eval max=strftime(max,"%d %B %Y %I:%M %p")</param>          
+    <param name="earliest">rt-24h</param>
+    <param name="latest">rt</param>
+    
+    <module name="SingleValue" layoutPanel="panel_row2_col1" autoRun="True">
+      <param name="field">max</param>
+      <param name="format">string</param>
+      <param name="beforeLabel">Last indexed event:</param>
+      <param name="linkView">flashtimeline</param>
+      <param name="linkSearch">| metadata type=hosts index="fail2ban_index" | stats max(lastTime) as max | eval max=strftime(max,"%d %B %Y %I:%M %p")</param>                                    
+    </module>        
+    
+  </module>
+  
+  <module name="Search" layoutPanel="panel_row2_col1" autoRun="True">
+    <param name="search">| metadata type=hosts index="fail2ban_index" | stats min(firstTime) as min | eval min=strftime(min,"%d %B %Y %I:%M %p")</param>          
+    
+    <module name="SingleValue" layoutPanel="panel_row2_col1">
+      <param name="field">min</param>
+      <param name="format">string</param>
+      <param name="beforeLabel">First indexed event:</param>
+      <param name="linkView">flashtimeline</param>
+      <param name="linkSearch"> | metadata type=hosts index="fail2ban_index" | stats min(firstTime) as min | eval min=strftime(min,"%d %B %Y %I:%M %p")</param>                                    
+    </module>        
+    
+  </module>
+  
+  <!-- End Fail2ban_Events -->
+  
+  
+  # Top List
+  
+  <module name="HTML" layoutPanel="panel_row3_col1">
+    <param name="html"><![CDATA[
+    
+       <p></p>
+       <h1>Top stats within Timerange:</h1>
+     
+      ]]></param>
+  </module>
+  
+  <module name="Search" layoutPanel="panel_row3_col1" autoRun="True">
+    <param name="search">`fail2ban_index` `fail2ban_src` | table *</param>
+    <param name="earliest">rt-24h</param>
+    <param name="latest">rt</param>
+    
+    <module name="PostProcess" layoutPanel="panel_row3_col1" autoRun="True">
+      <param name="search">| top limit=1 jailname</param>
+      
+      <module name="SingleValue" layoutPanel="panel_row3_col1">
+        <param name="field">jailname</param>
+        <param name="format">string</param>
+        <param name="beforeLabel">Top Jail:</param>
+        <param name="linkView">flashtimeline</param>
+        <param name="linkSearch">`fail2ban_index` `fail2ban_src` | top limit=1 jailname</param>                                    
+      </module>        
+      
+    </module>
+    
+    <module name="PostProcess" layoutPanel="panel_row3_col1" autoRun="True">
+      <param name="search">| sort - number_of_failures</param>
+      
+      <module name="SingleValue" layoutPanel="panel_row3_col1">
+        <param name="field">number_of_failures</param>
+        <param name="format">string</param>
+        <param name="beforeLabel">Top Number of Failures:</param>
+        <param name="linkView">flashtimeline</param>
+        <param name="linkSearch">`fail2ban_index` `fail2ban_src` | sort - number_of_failures</param>                                    
+      </module>        
+      
+    </module>  
+    
+    <module name="PostProcess" layoutPanel="panel_row3_col1" autoRun="True">
+      <param name="search">| top limit=1 ssh_passwdfailure</param>
+      
+      <module name="SingleValue" layoutPanel="panel_row3_col1">
+        <param name="field">ssh_passwdfailure</param>
+        <param name="format">string</param>
+        <param name="beforeLabel">Top SSH Password failure:</param>
+        <param name="linkView">flashtimeline</param>
+        <param name="linkSearch">`fail2ban_index` `fail2ban_src` | top limit=1 ssh_passwdfailure</param>                                    
+      </module>        
+      
+    </module>  
+    
+    <module name="PostProcess" layoutPanel="panel_row3_col1" autoRun="True">
+      <param name="search">| top limit=1 ssh_invaliduser</param>
+      
+      <module name="SingleValue" layoutPanel="panel_row3_col1">
+        <param name="field">ssh_invaliduser</param>
+        <param name="format">string</param>
+        <param name="beforeLabel">Top SSH Invalid Username:</param>
+        <param name="linkView">flashtimeline</param>
+        <param name="linkSearch">`fail2ban_index` `fail2ban_src` | top limit=1 ssh_invaliduser</param>                                    
+      </module>        
+      
+    </module>  
+    
+    <module name="PostProcess" layoutPanel="panel_row3_col1" autoRun="True">
+      <param name="search">| lookup geoip clientip as clientip |stats c(clientip) as count by client_country | sort - count | head 1</param>
+      
+      <module name="SingleValue" layoutPanel="panel_row3_col1">
+        <param name="field">client_country</param>
+        <param name="format">string</param>
+        <param name="beforeLabel">Top Country origin:</param>
+        <param name="linkView">flashtimeline</param>
+        <param name="linkSearch">`fail2ban_index` `fail2ban_src` | lookup geoip clientip as clientip |stats c(clientip) as count by client_country | sort - count | head 1</param>                                    
+      </module>        
+      
+    </module>
+    
+    <module name="PostProcess" layoutPanel="panel_row3_col1" autoRun="True">
+      <param name="search">| stats dc(clientip) as ClientIP by fail2ban_host | sort - ClientIP | head 1</param>
+      
+      <module name="SingleValue" layoutPanel="panel_row3_col1">
+        <param name="field">fail2ban_host</param>
+        <param name="format">string</param>
+        <param name="beforeLabel">Top Reporting server:</param>
+        <param name="linkView">flashtimeline</param>
+        <param name="linkSearch">`fail2ban_index` `fail2ban_src` | stats dc(clientip) as ClientIP by fail2ban_host | sort - ClientIP | head 1</param>                                    
+      </module>        
+      
+    </module>
+    
+  </module> <!--Search -->
+  
+  # Last List
+  
+  <module name="HTML" layoutPanel="panel_row4_col1">
+    <param name="html"><![CDATA[
+    
+       <p></p>
+       <h1>Last event stats within Timerange:</h1>
+     
+      ]]></param>
+  </module>
+  
+  <module name="Search" layoutPanel="panel_row4_col1" autoRun="True">
+    <param name="search">`fail2ban_index` `fail2ban_src` | sort - _time | head 1 | table *</param>
+    <param name="earliest">rt-24h</param>
+    <param name="latest">rt</param>
+    
+    <module name="PostProcess" layoutPanel="panel_row4_col1" autoRun="True">
+      <param name="search">| fields _time | eval time=strftime(_time,"%d %B %Y %I:%M %p")</param>
+      
+      <module name="SingleValue" layoutPanel="panel_row4_col1">
+        <param name="field">time</param>
+        <param name="format">string</param>
+        <param name="beforeLabel">Event Time:</param>
+        <param name="linkView">flashtimeline</param>
+        <param name="linkSearch">`fail2ban_index` `fail2ban_src` | sort - _time | head 1 | fields _time | eval time=strftime(_time,"%d %B %Y %I:%M %p")</param>                                    
+      </module>        
+      
+    </module>
+    
+    <module name="PostProcess" layoutPanel="panel_row4_col1" autoRun="True">
+      <param name="search">| fields jailname</param>
+      
+      <module name="SingleValue" layoutPanel="panel_row4_col1">
+        <param name="field">jailname</param>
+        <param name="format">string</param>
+        <param name="beforeLabel">Jail:</param>
+        <param name="linkView">flashtimeline</param>
+        <param name="linkSearch">`fail2ban_index` `fail2ban_src` | sort - _time | head 1 | fields jailname</param>                                    
+      </module>        
+      
+    </module>
+    
+    <module name="PostProcess" layoutPanel="panel_row4_col1" autoRun="True">
+      <param name="search">| fields number_of_failures</param>
+      
+      <module name="SingleValue" layoutPanel="panel_row4_col1">
+        <param name="field">number_of_failures</param>
+        <param name="format">string</param>
+        <param name="beforeLabel">Number of Failures:</param>
+        <param name="linkView">flashtimeline</param>
+        <param name="linkSearch">`fail2ban_index` `fail2ban_src` | sort - _time | head 1 | fields number_of_failures</param>                                    
+      </module>        
+      
+    </module>  
+    
+    <module name="PostProcess" layoutPanel="panel_row4_col1" autoRun="True">
+      <param name="search">| fields ssh_passwdfailure</param>
+      
+      <module name="SingleValue" layoutPanel="panel_row4_col1">
+        <param name="field">ssh_passwdfailure</param>
+        <param name="format">string</param>
+        <param name="beforeLabel">SSH Password failure:</param>
+        <param name="linkView">flashtimeline</param>
+        <param name="linkSearch">`fail2ban_index` `fail2ban_src` | sort - _time | head 1 | fields ssh_passwdfailure</param>                                    
+      </module>        
+      
+    </module>  
+    
+    <module name="PostProcess" layoutPanel="panel_row4_col1" autoRun="True">
+      <param name="search">| fields ssh_invaliduser</param>
+      
+      <module name="SingleValue" layoutPanel="panel_row4_col1">
+        <param name="field">ssh_invaliduser</param>
+        <param name="format">string</param>
+        <param name="beforeLabel">SSH Invalid Username:</param>
+        <param name="linkView">flashtimeline</param>
+        <param name="linkSearch">`fail2ban_index` `fail2ban_src` | sort - _time | head 1 | fields ssh_invaliduser</param>                                    
+      </module>        
+      
+    </module>  
+    
+    <module name="PostProcess" layoutPanel="panel_row4_col1" autoRun="True">
+      <param name="search">| lookup geoip clientip as clientip |stats c(clientip) as count by client_country | sort - count | head 1</param>
+      
+      <module name="SingleValue" layoutPanel="panel_row4_col1">
+        <param name="field">client_country</param>
+        <param name="format">string</param>
+        <param name="beforeLabel">Country origin:</param>
+        <param name="linkView">flashtimeline</param>
+        <param name="linkSearch">`fail2ban_index` `fail2ban_src` | sort - _time | head 1 | lookup geoip clientip as clientip |stats c(clientip) as count by client_country | sort - count | head 1</param>                                    
+      </module>        
+      
+    </module>
+    
+    <module name="PostProcess" layoutPanel="panel_row4_col1" autoRun="True">
+      <param name="search">| stats dc(clientip) as ClientIP by fail2ban_host | sort - ClientIP | head 1</param>
+      
+      <module name="SingleValue" layoutPanel="panel_row4_col1">
+        <param name="field">fail2ban_host</param>
+        <param name="format">string</param>
+        <param name="beforeLabel">Reporting server:</param>
+        <param name="linkView">flashtimeline</param>
+        <param name="linkSearch">`fail2ban_index` `fail2ban_src` | sort - _time | head 1 | stats dc(clientip) as ClientIP by fail2ban_host | sort - ClientIP | head 1</param>                                    
+      </module>        
+      
+    </module>
+    
+  </module> <!--Search -->
+  
+  <!-- Alert Trend -->
+  
+  <module name="Search" layoutPanel="panel_row5_col1" autoRun="True">
+    <param name="search">`fail2ban_index` `fail2ban_src` | timechart span=5m count by jailname
+    </param>
+    <param name="earliest">rt-24h</param>
+    <param name="latest">rt</param>
+    
+    <module name="HTML" layoutPanel="panel_row5_col1">
+      <param name="html"><![CDATA[
+        <h3>Alert Trend:</h3>
+        ]]></param>
+    </module>
+    
+    <module name="HiddenFieldPicker">
+      <param name="strictMode">True</param>
+      <module name="JobProgressIndicator">
+        <module name="EnablePreview">
+          <param name="display">False</param>
+          <param name="enable">True</param>
+          <module name="HiddenChartFormatter">
+            <param name="charting.chart.stackMode">stacked</param>
+            <param name="charting.legend.placement">bottom</param>
+            <param name="charting.chart">area</param>
+            <param name="charting.axisTitleX.text">Time</param>
+            <param name="charting.axisTitleY.text">Denied Client by Jail</param>
+            <module name="JSChart">
+              <param name="width">100%</param>
+              <param name="height">250px</param>
+              <module name="ConvertToDrilldownSearch">
+                <module name="ViewRedirector">
+                  <param name="viewTarget">flashtimeline</param>
+                </module>
+              </module>
+            </module>
+            <module name="ViewRedirectorLink">
+              <param name="viewTarget">flashtimeline</param>
+            </module>
+          </module>
+        </module>
+      </module>
+    </module>
+  </module> 
+  
+  
+  
+</view>

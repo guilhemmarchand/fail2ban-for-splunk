@@ -1,0 +1,42 @@
+<nav>
+  <collection label="About Splunk for Fail2ban">
+    
+    <!-- Version = 2.02 / Last update = June 10, 2013 / Author = Guilhem Marchand / guilhem.marchand@gmail.com -->
+    
+    <view name="installation_guide"/>
+    <divider />
+    <a href="http://youresuchageek.blogspot.com/2013/01/splunkforfail2ban.html">Guide on youresuchageek.com</a>
+    <divider />
+    <a href="mailto:guilhem.marchand@gmail.com">Mail your Feedback!</a>
+  </collection>
+  
+  <view name="Home" default="true"/>
+  
+  <collection label="Saved Searches">
+    <divider />
+    <collection label="Searches">
+      <saved name="Fail2ban denied by IP" view="flashtimeline"/>
+      <saved source="unclassified" match="Last" />
+      <saved source="unclassified" match="Top" />
+    </collection>
+    <divider />
+  </collection>
+  
+  <view name="System" />
+  
+  <collection label="ViewsSearches">
+    <collection label="User Created Views">
+      <a href="/manager/Security/data/ui/views">Manage Views</a>
+      <divider />
+      <view source="unclassified"/>
+    </collection>
+    <divider />
+    
+    <collection label="All Saved Searches &amp; Reports">
+      <a href="/manager/Security/saved/searches">Manage Searches &amp; Reports</a>
+      <divider />
+      <saved source="unclassified"/>
+    </collection>
+    <divider />
+  </collection>
+</nav>

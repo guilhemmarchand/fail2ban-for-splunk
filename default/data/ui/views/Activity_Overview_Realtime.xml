@@ -1,0 +1,807 @@
+<view autoCancelInterval="90" isVisible="False" onunloadCancelJobs="True" template="dashboard.html" stylesheet="dashboard2.css" isSticky="False">
+  
+  <!-- Version = 2.03 / Last update = June 13, 2013 / Author = Guilhem Marchand / guilhem.marchand@gmail.com -->
+  
+  <label>Fail2ban Activity Overview</label>
+  
+  <!-- standard splunk chrome at the top -->
+  <module name="AccountBar" layoutPanel="appHeader"/>
+  <module name="AppBar" layoutPanel="navigationHeader"/>
+  <module name="SideviewUtils" layoutPanel="appHeader" />
+  
+  <module name="Message" layoutPanel="messaging">
+    <param name="filter">*</param>
+    <param name="clearOnJobDispatch">False</param>
+    <param name="maxSize">1</param>
+  </module>
+  
+  <module name="URLLoader" layoutPanel="panel_row1_col1_grp1" autoRun="True">
+    
+    <module name="HTML" layoutPanel="panel_row1_col1_grp1">
+      <param name="html"><![CDATA[
+    
+       <p></p>
+       <h1>Fail2ban Activity Overview</h1>
+       <p></p>
+     
+      ]]></param>
+    </module>
+    
+    
+    <!-- Print Icon -->    
+    <module name="SearchControls" layoutPanel="panel_row1_col1_grp2">
+      <param name="sections">print</param>
+    </module>  
+    
+    <!-- Logo with a small graph screenshot -->
+    <module name="ServerSideInclude" layoutPanel="panel_row1_col1_grp2">
+      <param name="src">chartlogo.html</param>
+    </module>    
+    
+    <!-- Global TimeRangePicker -->  
+    <module name="TimeRangePicker" layoutPanel="splSearchControls-inline">
+      <param name="searchWhenChanged">True</param>
+      
+      <module name="Search">
+        <param name="search">
+          * | head 1 | addinfo
+          | eval searchStartTIme=strftime(info_min_time,"%d %B %Y %I:%M:%S %p")
+          | eval searchEndTime=strftime(info_max_time,"%d %B %Y %I:%M:%S %p")
+          | eval earliest=info_min_time
+          | eval latest=info_max_time
+        </param>  
+          
+          <!-- Showing Span value -->   
+          <module name="HTML" layoutPanel="panel_row1_col1_grp1">
+            <param name="html"><![CDATA[
+     
+     <h2>Using Span Time value: 5 minutes</h2>
+     
+      ]]></param>
+          </module>  
+          
+          <!-- Show time range start and end -->
+          
+          <module name="SingleValue" layoutPanel="panel_row1_col1_grp1">
+            <param name="field">searchStartTIme</param>
+            <param name="format">string</param>
+            <param name="beforeLabel">Begin Time:</param>
+          </module>        
+          <module name="SingleValue" layoutPanel="panel_row1_col1_grp1">
+            <param name="field">searchEndTime</param>
+            <param name="format">string</param>
+            <param name="beforeLabel">End Time:</param>
+          </module>  
+          
+          <!-- ########################################    BEGIN OF SECTIONS      ######################################## -->
+          
+          <!-- Summary -->   
+          <module name="HTML" layoutPanel="panel_row2_col1">
+            <param name="html"><![CDATA[
+     
+     <h2>Activity Summary:</h2>
+     
+      ]]></param>
+          </module>
+          
+          <module name="Search" layoutPanel="panel_row2_col1">
+            <param name="search">`fail2ban_index` `fail2ban_src` | table *</param>  
+            
+            <module name="PostProcess">
+              <param name="search">| stats c(id) as count</param>
+              <module name="SingleValue">
+                <param name="field">count</param>
+                <param name="format">string</param>
+                <param name="beforeLabel">Number of Hosts Denied:</param>
+                <param name="linkView">flashtimeline</param>
+                <param name="linkSearch">`fail2ban_index` `fail2ban_src` |stats c(id) as count</param>                                    
+              </module>
+            </module>
+            
+            <module name="PostProcess">
+              <param name="search">| top limit=1 jailname</param>
+              
+              <module name="SingleValue" layoutPanel="panel_row2_col1">
+                <param name="field">jailname</param>
+                <param name="format">string</param>
+                <param name="beforeLabel">Top Jail of denied connections:</param>
+                <param name="linkView">flashtimeline</param>
+                <param name="linkSearch">`fail2ban_index` `fail2ban_src` | top limit=1 jailname</param>                                    
+              </module>        
+              
+            </module>
+            
+            <module name="PostProcess">
+              <param name="search">| sort - number_of_failures</param>
+              
+              <module name="SingleValue" layoutPanel="panel_row2_col1">
+                <param name="field">number_of_failures</param>
+                <param name="format">string</param>
+                <param name="beforeLabel">Top Event Number of Failures:</param>
+                <param name="linkView">flashtimeline</param>
+                <param name="linkSearch">`fail2ban_index` `fail2ban_src` | sort - number_of_failures</param>                                    
+              </module>        
+              
+            </module>
+            
+            <module name="PostProcess">
+              <param name="search">| top limit=1 ssh_invaliduser</param>
+              
+              <module name="SingleValue" layoutPanel="panel_row2_col1">
+                <param name="field">ssh_invaliduser</param>
+                <param name="format">string</param>
+                <param name="beforeLabel">Top SSH Invalid User:</param>
+                <param name="linkView">flashtimeline</param>
+                <param name="linkSearch">`fail2ban_index` `fail2ban_src` | top limit=1 ssh_invaliduser</param>                                    
+              </module>        
+              
+            </module>  
+            
+            <module name="PostProcess">
+              <param name="search">| top limit=1 ssh_passwdfailure</param>
+              
+              <module name="SingleValue" layoutPanel="panel_row2_col1">
+                <param name="field">ssh_passwdfailure</param>
+                <param name="format">string</param>
+                <param name="beforeLabel">Top SSH User Password Failure:</param>
+                <param name="linkView">flashtimeline</param>
+                <param name="linkSearch">`fail2ban_index` `fail2ban_src` | top limit=1 ssh_passwdfailure</param>                                    
+              </module>        
+              
+            </module>
+            
+            <module name="PostProcess">
+              <param name="search">| lookup geoip clientip as clientip |stats c(clientip) as count by client_country | sort - count | head 1</param>
+              
+              <module name="SingleValue" layoutPanel="panel_row2_col1">
+                <param name="field">client_country</param>
+                <param name="format">string</param>
+                <param name="beforeLabel">Top Country origin of denied connections:</param>
+                <param name="linkView">flashtimeline</param>
+                <param name="linkSearch">`fail2ban_index` `fail2ban_src` | lookup geoip clientip as clientip |stats c(clientip) as count by client_country | sort - count | head 1</param>                                    
+              </module>        
+              
+            </module>
+            
+            <module name="PostProcess">
+              <param name="search">| stats dc(clientip) as ClientIP by fail2ban_host | sort - ClientIP | head 1</param>
+              
+              <module name="SingleValue" layoutPanel="panel_row2_col1">
+                <param name="field">fail2ban_host</param>
+                <param name="format">string</param>
+                <param name="beforeLabel">Top Reporting host:</param>
+                <param name="linkView">flashtimeline</param>
+                <param name="linkSearch">`fail2ban_index` `fail2ban_src` | stats dc(clientip) as ClientIP by fail2ban_host | sort - ClientIP | head 1</param>                                    
+              </module>        
+              
+            </module>
+            
+          </module> <!-- Search -->
+          
+          
+          <!-- New Section -->
+          
+          <module name="Search" layoutPanel="panel_row3_col1">
+            <param name="search">
+              `fail2ban_index` `fail2ban_src` | sort - _time | head 100 | lookup geoip clientip as clientip | fillnull value=Unknown | table * | fields _time,fail2ban_host,clientip,client_country,client_city,rhost,id,jailname,number_of_failures,ssh_invaliduser,ssh_passwdfailure | fields - _raw | rename fail2ban_host as Fail2ban_Host clientip as ClientIP client_country as Client_Country client_city as Client_City rhost as Resolved_Host id as ID jailname as Jailname number_of_failures as Number_of_Failures
+            </param>
+            
+            <module name="HTML">
+              <param name="html"><![CDATA[
+     
+       <h2>Last events: (100 events max)</h2>
+     
+        ]]></param>
+            </module>
+            
+            <module name="ViewstateAdapter">
+              <param name="suppressionList"/>
+              <module name="HiddenFieldPicker">
+                <param name="strictMode">True</param>
+                <module name="JobProgressIndicator"/>
+                <module name="Paginator">
+                  <param name="count">10</param>
+                  <param name="entityName">results</param>
+                  <module name="EnablePreview">
+                    <param name="display">False</param>
+                    <param name="enable">True</param>
+                    <module name="SimpleResultsTable">
+                      <param name="allowTransformedFieldSelect">True</param>
+                      <param name="entityName">results</param>
+                      <param name="drilldown">row</param>
+                      <module name="Gimp"/>
+                      <module name="ConvertToDrilldownSearch">
+                        <module name="ViewRedirector">
+                          <param name="viewTarget">flashtimeline</param>
+                        </module>
+                      </module>
+                    </module>
+                    <module name="ViewRedirectorLink">
+                      <param name="viewTarget">flashtimeline</param>
+                    </module>
+                  </module>
+                </module>
+              </module>
+            </module>
+          </module>
+          
+          
+          <!-- New Section -->
+          
+          <module name="Search" layoutPanel="panel_row4_col1">
+            <param name="search">`fail2ban_index` `fail2ban_src` | timechart span=5m count by jailname
+            </param>
+            
+            <module name="HTML">
+              <param name="html"><![CDATA[
+        <h3>Alert Trend:</h3>
+        ]]></param>
+            </module>
+            
+            <module name="HiddenFieldPicker">
+              <param name="strictMode">True</param>
+              <module name="JobProgressIndicator">
+                <module name="EnablePreview">
+                  <param name="display">False</param>
+                  <param name="enable">True</param>
+                  <module name="HiddenChartFormatter">
+                    <param name="charting.chart.stackMode">stacked</param>
+                    <param name="charting.legend.placement">bottom</param>
+                    <param name="charting.chart">area</param>
+                    <param name="charting.axisTitleX.text">Time</param>
+                    <param name="charting.axisTitleY.text">Denied Client by Jail</param>
+                    <module name="JSChart">
+                      <param name="width">100%</param>
+                      <param name="height">250px</param>
+                      <module name="ConvertToDrilldownSearch">
+                        <module name="ViewRedirector">
+                          <param name="viewTarget">flashtimeline</param>
+                        </module>
+                      </module>
+                    </module>
+                    <module name="ViewRedirectorLink">
+                      <param name="viewTarget">flashtimeline</param>
+                    </module>
+                  </module>
+                </module>
+              </module>
+            </module>
+          </module> 
+          
+          <!-- New Section -->
+          
+          <module name="Search" layoutPanel="panel_row5_col1_grp1">
+            <param name="search">`fail2ban_index` `fail2ban_src` | lookup geoip clientip as clientip | fillnull value=Unknown | top limit=100 client_country | eval percent=round(percent,2)
+            </param>
+            
+            <module name="PostProcess">
+              <param name="search">| head 10
+              </param>
+              
+              <module name="HTML">
+                <param name="html"><![CDATA[
+        <h3>Top 10 Country Origin of denied IP:</h3>
+        ]]></param>
+              </module>
+              
+              <module name="HiddenFieldPicker">
+                <param name="strictMode">True</param>
+                <module name="JobProgressIndicator">
+                  <module name="EnablePreview">
+                    <param name="display">False</param>
+                    <param name="enable">True</param>
+                    <module name="HiddenChartFormatter">
+                      <param name="charting.legend.placement">bottom</param>
+                      <param name="charting.chart">pie</param>
+                      <param name="charting.axisTitleX.text">Time</param>
+                      <param name="charting.axisTitleY.text">Country</param>
+                      <module name="JSChart">
+                        <param name="width">100%</param>
+                        <param name="height">320px</param>
+                        <module name="ConvertToDrilldownSearch">
+                          <module name="ViewRedirector">
+                            <param name="viewTarget">flashtimeline</param>
+                          </module>
+                        </module>
+                      </module>
+                      <module name="ViewRedirectorLink">
+                        <param name="viewTarget">flashtimeline</param>
+                      </module>
+                    </module>
+                  </module>
+                </module>
+              </module>
+              
+            </module> <!-- PostProcess --> 
+            
+            
+            <module name="PostProcess" layoutPanel="panel_row5_col1_grp2">
+              <param name="search">| strcat percent " %" percent
+              </param>
+              
+              <module name="HTML">
+                <param name="html"><![CDATA[
+        <h3>Top 100:</h3>
+        ]]></param>
+              </module>              
+              
+              <module name="HiddenFieldPicker">
+                <param name="strictMode">True</param>
+                <module name="JobProgressIndicator"/>
+                <module name="Paginator">
+                  <param name="count">10</param>
+                  <param name="entityName">results</param>
+                  <module name="EnablePreview">
+                    <param name="display">False</param>
+                    <param name="enable">True</param>
+                    <module name="SimpleResultsTable">
+                      <param name="allowTransformedFieldSelect">True</param>
+                      <param name="entityName">results</param>
+                      <param name="drilldown">row</param>
+                      <module name="Gimp"/>
+                      <module name="ConvertToDrilldownSearch">
+                        <module name="ViewRedirector">
+                          <param name="viewTarget">flashtimeline</param>
+                        </module>
+                      </module>
+                    </module>
+                    <module name="ViewRedirectorLink">
+                      <param name="viewTarget">flashtimeline</param>
+                    </module>
+                  </module>
+                </module>
+              </module>
+              
+            </module> <!-- PostProcess --> 
+            
+          </module> <!-- Search -->
+          
+          <!-- New Section -->
+          
+          <module name="Search" layoutPanel="panel_row6_col1_grp1">
+            <param name="search">`fail2ban_index` `fail2ban_src` | top limit=100 clientip | eval percent=round(percent,2)
+            </param>
+            
+            <module name="PostProcess">
+              <param name="search">| head 10
+              </param>
+              
+              <module name="HTML">
+                <param name="html"><![CDATA[
+        <h3>Top 10 denied IP by Count:</h3>
+        ]]></param>
+              </module>
+              
+              <module name="HiddenFieldPicker">
+                <param name="strictMode">True</param>
+                <module name="JobProgressIndicator">
+                  <module name="EnablePreview">
+                    <param name="display">False</param>
+                    <param name="enable">True</param>
+                    <module name="HiddenChartFormatter">
+                      <param name="charting.legend.placement">bottom</param>
+                      <param name="charting.chart">pie</param>
+                      <param name="charting.axisTitleX.text">Time</param>
+                      <param name="charting.axisTitleY.text">Client IP</param>
+                      <module name="JSChart">
+                        <param name="width">100%</param>
+                        <param name="height">320px</param>
+                        <module name="ConvertToDrilldownSearch">
+                          <module name="ViewRedirector">
+                            <param name="viewTarget">flashtimeline</param>
+                          </module>
+                        </module>
+                      </module>
+                      <module name="ViewRedirectorLink">
+                        <param name="viewTarget">flashtimeline</param>
+                      </module>
+                    </module>
+                  </module>
+                </module>
+              </module>
+              
+            </module> <!-- PostProcess --> 
+            
+            <module name="PostProcess" layoutPanel="panel_row6_col1_grp2">
+              <param name="search">| strcat percent " %" percent
+              </param>  
+              
+              <module name="HTML">
+                <param name="html"><![CDATA[
+        <h3>Top 100:</h3>
+        ]]></param>
+              </module>              
+              
+              <module name="HiddenFieldPicker">
+                <param name="strictMode">True</param>
+                <module name="JobProgressIndicator"/>
+                <module name="Paginator">
+                  <param name="count">10</param>
+                  <param name="entityName">results</param>
+                  <module name="EnablePreview">
+                    <param name="display">False</param>
+                    <param name="enable">True</param>
+                    <module name="SimpleResultsTable">
+                      <param name="allowTransformedFieldSelect">True</param>
+                      <param name="entityName">results</param>
+                      <param name="drilldown">row</param>
+                      <module name="Gimp"/>
+                      <module name="ConvertToDrilldownSearch">
+                        <module name="ViewRedirector">
+                          <param name="viewTarget">flashtimeline</param>
+                        </module>
+                      </module>
+                    </module>
+                    <module name="ViewRedirectorLink">
+                      <param name="viewTarget">flashtimeline</param>
+                    </module>
+                  </module>
+                </module>
+              </module>
+              
+            </module> <!-- PostProcess --> 
+            
+          </module> <!-- Search -->
+          
+          <!-- New Section -->
+          
+          <module name="Search" layoutPanel="panel_row7_col1_grp1">
+            <param name="search">`fail2ban_index` `fail2ban_src` | top limit=100 jailname | eval percent=round(percent,2)
+            </param>
+            
+            <module name="PostProcess">
+              <param name="search">| head 10
+              </param>
+              
+              <module name="HTML">
+                <param name="html"><![CDATA[
+        <h3>Top 10 denied IP by Jail:</h3>
+        ]]></param>
+              </module>
+              
+              <module name="HiddenFieldPicker">
+                <param name="strictMode">True</param>
+                <module name="JobProgressIndicator">
+                  <module name="EnablePreview">
+                    <param name="display">False</param>
+                    <param name="enable">True</param>
+                    <module name="HiddenChartFormatter">
+                      <param name="charting.legend.placement">bottom</param>
+                      <param name="charting.chart">pie</param>
+                      <param name="charting.axisTitleX.text">Time</param>
+                      <param name="charting.axisTitleY.text">Jail</param>
+                      <module name="JSChart">
+                        <param name="width">100%</param>
+                        <param name="height">320px</param>
+                        <module name="ConvertToDrilldownSearch">
+                          <module name="ViewRedirector">
+                            <param name="viewTarget">flashtimeline</param>
+                          </module>
+                        </module>
+                      </module>
+                      <module name="ViewRedirectorLink">
+                        <param name="viewTarget">flashtimeline</param>
+                      </module>
+                    </module>
+                  </module>
+                </module>
+              </module>
+              
+            </module> <!-- PostProcess --> 
+            
+            <module name="PostProcess" layoutPanel="panel_row7_col1_grp2">
+              <param name="search">| strcat percent " %" percent
+              </param>  
+              
+              <module name="HTML">
+                <param name="html"><![CDATA[
+        <h3>Top 100:</h3>
+        ]]></param>
+              </module>              
+              
+              <module name="HiddenFieldPicker">
+                <param name="strictMode">True</param>
+                <module name="JobProgressIndicator"/>
+                <module name="Paginator">
+                  <param name="count">10</param>
+                  <param name="entityName">results</param>
+                  <module name="EnablePreview">
+                    <param name="display">False</param>
+                    <param name="enable">True</param>
+                    <module name="SimpleResultsTable">
+                      <param name="allowTransformedFieldSelect">True</param>
+                      <param name="entityName">results</param>
+                      <param name="drilldown">row</param>
+                      <module name="Gimp"/>
+                      <module name="ConvertToDrilldownSearch">
+                        <module name="ViewRedirector">
+                          <param name="viewTarget">flashtimeline</param>
+                        </module>
+                      </module>
+                    </module>
+                    <module name="ViewRedirectorLink">
+                      <param name="viewTarget">flashtimeline</param>
+                    </module>
+                  </module>
+                </module>
+              </module>
+              
+            </module> <!-- PostProcess --> 
+            
+          </module> <!-- Search -->  
+          
+          <!-- New Section -->
+          
+          <module name="Search" layoutPanel="panel_row8_col1_grp1">
+            <param name="search">`fail2ban_index` `fail2ban_src` | top limit=100 fail2ban_host | eval percent=round(percent,2)
+            </param>
+            
+            <module name="PostProcess">
+              <param name="search">| head 10
+              </param>
+              
+              <module name="HTML">
+                <param name="html"><![CDATA[
+        <h3>Top 10 Reporting Servers:</h3>
+        ]]></param>
+              </module>
+              
+              <module name="HiddenFieldPicker">
+                <param name="strictMode">True</param>
+                <module name="JobProgressIndicator">
+                  <module name="EnablePreview">
+                    <param name="display">False</param>
+                    <param name="enable">True</param>
+                    <module name="HiddenChartFormatter">
+                      <param name="charting.legend.placement">bottom</param>
+                      <param name="charting.chart">pie</param>
+                      <param name="charting.axisTitleX.text">Time</param>
+                      <param name="charting.axisTitleY.text">Reporting Server</param>
+                      <module name="JSChart">
+                        <param name="width">100%</param>
+                        <param name="height">320px</param>
+                        <module name="ConvertToDrilldownSearch">
+                          <module name="ViewRedirector">
+                            <param name="viewTarget">flashtimeline</param>
+                          </module>
+                        </module>
+                      </module>
+                      <module name="ViewRedirectorLink">
+                        <param name="viewTarget">flashtimeline</param>
+                      </module>
+                    </module>
+                  </module>
+                </module>
+              </module>
+              
+            </module> <!-- PostProcess --> 
+            
+            
+            <module name="PostProcess" layoutPanel="panel_row8_col1_grp2">
+              <param name="search">| strcat percent " %" percent
+              </param>  
+              
+              <module name="HTML">
+                <param name="html"><![CDATA[
+        <h3>Top 100:</h3>
+        ]]></param>
+              </module>              
+              
+              <module name="HiddenFieldPicker">
+                <param name="strictMode">True</param>
+                <module name="JobProgressIndicator"/>
+                <module name="Paginator">
+                  <param name="count">10</param>
+                  <param name="entityName">results</param>
+                  <module name="EnablePreview">
+                    <param name="display">False</param>
+                    <param name="enable">True</param>
+                    <module name="SimpleResultsTable">
+                      <param name="allowTransformedFieldSelect">True</param>
+                      <param name="entityName">results</param>
+                      <param name="drilldown">row</param>
+                      <module name="Gimp"/>
+                      <module name="ConvertToDrilldownSearch">
+                        <module name="ViewRedirector">
+                          <param name="viewTarget">flashtimeline</param>
+                        </module>
+                      </module>
+                    </module>
+                    <module name="ViewRedirectorLink">
+                      <param name="viewTarget">flashtimeline</param>
+                    </module>
+                  </module>
+                </module>
+              </module>
+              
+            </module> <!-- PostProcess --> 
+            
+          </module> <!-- Search -->    
+          
+          <!-- New Section -->
+          
+          <module name="Search" layoutPanel="panel_row9_col1_grp1">
+            <param name="search">`fail2ban_index` `fail2ban_src` | top limit=100 ssh_invaliduser | eval percent=round(percent,2)
+            </param>
+            
+            <module name="PostProcess">
+              <param name="search">| head 10
+              </param>
+              
+              <module name="HTML">
+                <param name="html"><![CDATA[
+        <h3>Top 10 SSH Invalid Users:</h3>
+        ]]></param>
+              </module>
+              
+              <module name="HiddenFieldPicker">
+                <param name="strictMode">True</param>
+                <module name="JobProgressIndicator">
+                  <module name="EnablePreview">
+                    <param name="display">False</param>
+                    <param name="enable">True</param>
+                    <module name="HiddenChartFormatter">
+                      <param name="charting.legend.placement">bottom</param>
+                      <param name="charting.chart">pie</param>
+                      <param name="charting.axisTitleX.text">Time</param>
+                      <param name="charting.axisTitleY.text">Username</param>
+                      <module name="JSChart">
+                        <param name="width">100%</param>
+                        <param name="height">320px</param>
+                        <module name="ConvertToDrilldownSearch">
+                          <module name="ViewRedirector">
+                            <param name="viewTarget">flashtimeline</param>
+                          </module>
+                        </module>
+                      </module>
+                      <module name="ViewRedirectorLink">
+                        <param name="viewTarget">flashtimeline</param>
+                      </module>
+                    </module>
+                  </module>
+                </module>
+              </module>
+              
+            </module> <!-- PostProcess --> 
+            
+            
+            <module name="PostProcess" layoutPanel="panel_row9_col1_grp2">
+              <param name="search">| strcat percent " %" percent
+              </param>  
+              
+              <module name="HTML">
+                <param name="html"><![CDATA[
+        <h3>Top 100:</h3>
+        ]]></param>
+              </module>              
+              
+              <module name="HiddenFieldPicker">
+                <param name="strictMode">True</param>
+                <module name="JobProgressIndicator"/>
+                <module name="Paginator">
+                  <param name="count">10</param>
+                  <param name="entityName">results</param>
+                  <module name="EnablePreview">
+                    <param name="display">False</param>
+                    <param name="enable">True</param>
+                    <module name="SimpleResultsTable">
+                      <param name="allowTransformedFieldSelect">True</param>
+                      <param name="entityName">results</param>
+                      <param name="drilldown">row</param>
+                      <module name="Gimp"/>
+                      <module name="ConvertToDrilldownSearch">
+                        <module name="ViewRedirector">
+                          <param name="viewTarget">flashtimeline</param>
+                        </module>
+                      </module>
+                    </module>
+                    <module name="ViewRedirectorLink">
+                      <param name="viewTarget">flashtimeline</param>
+                    </module>
+                  </module>
+                </module>
+              </module>
+              
+            </module> <!-- PostProcess --> 
+            
+          </module> <!-- Search -->  
+          
+          <!-- New Section -->
+          
+          <module name="Search" layoutPanel="panel_row10_col1_grp1">
+            <param name="search">`fail2ban_index` `fail2ban_src` | top limit=100 ssh_passwdfailure | eval percent=round(percent,2)
+            </param>
+            
+            <module name="PostProcess">
+              <param name="search">| head 10
+              </param>
+              
+              <module name="HTML">
+                <param name="html"><![CDATA[
+        <h3>Top 10 SSH Users Password Failure:</h3>
+        ]]></param>
+              </module>
+              
+              <module name="HiddenFieldPicker">
+                <param name="strictMode">True</param>
+                <module name="JobProgressIndicator">
+                  <module name="EnablePreview">
+                    <param name="display">False</param>
+                    <param name="enable">True</param>
+                    <module name="HiddenChartFormatter">
+                      <param name="charting.legend.placement">bottom</param>
+                      <param name="charting.chart">pie</param>
+                      <param name="charting.axisTitleX.text">Time</param>
+                      <param name="charting.axisTitleY.text">Username</param>
+                      <module name="JSChart">
+                        <param name="width">100%</param>
+                        <param name="height">320px</param>
+                        <module name="ConvertToDrilldownSearch">
+                          <module name="ViewRedirector">
+                            <param name="viewTarget">flashtimeline</param>
+                          </module>
+                        </module>
+                      </module>
+                      <module name="ViewRedirectorLink">
+                        <param name="viewTarget">flashtimeline</param>
+                      </module>
+                    </module>
+                  </module>
+                </module>
+              </module>
+              
+            </module> <!-- PostProcess --> 
+            
+            
+            <module name="PostProcess" layoutPanel="panel_row10_col1_grp2">
+              <param name="search">| strcat percent " %" percent
+              </param>  
+              
+              <module name="HTML">
+                <param name="html"><![CDATA[
+        <h3>Top 100:</h3>
+        ]]></param>
+              </module>              
+              
+              <module name="HiddenFieldPicker">
+                <param name="strictMode">True</param>
+                <module name="JobProgressIndicator"/>
+                <module name="Paginator">
+                  <param name="count">10</param>
+                  <param name="entityName">results</param>
+                  <module name="EnablePreview">
+                    <param name="display">False</param>
+                    <param name="enable">True</param>
+                    <module name="SimpleResultsTable">
+                      <param name="allowTransformedFieldSelect">True</param>
+                      <param name="entityName">results</param>
+                      <param name="drilldown">row</param>
+                      <module name="Gimp"/>
+                      <module name="ConvertToDrilldownSearch">
+                        <module name="ViewRedirector">
+                          <param name="viewTarget">flashtimeline</param>
+                        </module>
+                      </module>
+                    </module>
+                    <module name="ViewRedirectorLink">
+                      <param name="viewTarget">flashtimeline</param>
+                    </module>
+                  </module>
+                </module>
+              </module>
+              
+            </module> <!-- PostProcess --> 
+            
+          </module> <!-- Search -->  
+          
+          
+          
+          <!-- ########################################    END OF SECTIONS      ######################################## -->
+          
+        </module> <!-- TimeRangePicker -->
+        
+      </module> <!-- URLLoader -->
+    
+  </module> <!-- Search -->
+  
+</view>
